@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Mock SSH Connection
-        run: echo "connecting to production server at 192.168.1.1..."
+        run: echo "Connecting to production server at 192.168.1.1..."
 
       - name: Pull New Image
         run: |
