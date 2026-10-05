@@ -1,11 +1,15 @@
-name: Node.js CI
+name: CI Publish Deploy
 
-on: [push]
+on:
+  push:
+    branches: ["master", "main"]
+
+permissions:
+  packages: write
 
 jobs:
   ci:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -13,10 +17,49 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-verson: 16
+          node-version: 16
 
       - name: Install dependencies
         run: npm install
 
       - name: Run tests
         run: npm test
+
+  build:
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}/app:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mock SSH Connection
+        run: echo "Connecting to production server at 192.168.1.1..."
+
+      - name: Pull New Image
+        run: |
+          echo "Logging into Registry..."
+          echo "Pulling image ghcr.io/${{ github.repository }}/app:latest..."
+
+      - name: Restart Application
+        run: |
+          echo "Stopping old container..."
+          echo "Starting new container..."
+          echo "Deployment Successful!"
